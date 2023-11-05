@@ -115,15 +115,15 @@ def chat_command():
 # '----------------------------------------------
 
 @chat_command()
-async def fn_echo(self, arg):
+def fn_echo(self, arg):
 	return arg
 
 @chat_command()
-async def fn_allcommands(self, arg):
+def fn_allcommands(self, arg):
 	return " ".join(chat_command_handlers.keys())
 
 # Call the handler for a chat command
-async def handle_chat_command(self, text):
+def handle_chat_command(self, text):
 	if not text.startswith(bot_prefix):
 		return
 	text = text[len(bot_prefix):]

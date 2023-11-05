@@ -15,7 +15,11 @@ class GameBase(object):
 		self.max_players = 1
 		self.keys_to_request = []
 		self.keys_required   = []
-		self.timeout = 5 * 30
+		self.timeout = 8 * 60
+
+		self.name = "Game"
+		self.instructions = ""
+		self.player_slot_names = None # List/tuple of a name for each player slot, in order
 
 	def set_screen_size(self, map_w, map_h, tile_w, tile_h, value = (0,0), over_value = None):
 		self.map_w = map_w
@@ -113,7 +117,4 @@ class GameBase(object):
 		pass
 
 	def key_release(self, player, key):
-		pass
-
-	def instructions(self, user):
 		pass
