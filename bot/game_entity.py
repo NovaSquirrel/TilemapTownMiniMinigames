@@ -6,9 +6,9 @@ entity_request_count = 1
 
 class GamePlayer(object):
 	def __init__(self, entity_id, username, name):
-		self.took_keys = False
-		self.keys_available = set()
-		self.last_input_at = None
+		self.took_keys = False      # take_controls was used
+		self.keys_available = set() # Which keys the user's client has, out of the ones that were requested
+		self.last_input_at = None   # Last time.time() the player sent in an input
 
 		self.entity_id = entity_id
 		self.username = username
@@ -17,17 +17,19 @@ class GamePlayer(object):
 class GameScreen(object):
 	def __init__(self, town):
 		self.entity_id = None
-		self.entity_requested = False # If true, there was already an attempt at making the entity
+		self.entity_requested = False   # If true, there was already an attempt at making the entity
 		self.town = town
 
-		self.game = None
-		self.encoded_game_screen = None
+		self.game = None                # The currently active game!!
+		self.encoded_game_screen = None # For detecting when the screen actually needs to be re-sent
 
 		# Management
-		self.current_players = []
-		self.current_players_by_id = {}
-		self.game_in_progress = False
-		self.last_input_at = None
+		self.current_players = []       # Players who are currently in the game, or who will be when it starts; in order
+		self.current_players_by_id = {} # Same, but as a dictionary
+		self.waiting_for_keys = {}      # Users who will join as soon as their controls are taken
+
+		self.game_in_progress = False   # Game is currently going on and no one new can join
+		self.last_input_at = None       # Last input the game got from anyone, to know when to stop the game due to inactivity
 
 	# --- Setup
 
@@ -38,17 +40,16 @@ class GameScreen(object):
 		self.town.game_screens_by_entity_id[e_id] = self
 		self.town.send_cmd_command(f'message_forwarding set {self.entity_id} MSG,EXT,ERR,PRI')
 
-		self.change_game(game_directory['connect_4'])
+		self.change_game(game_directory['connect_4']) # Temporary
 
 	def setup_by_create(self):
 		# Create a new entity and then use it
 		global entity_request_count
 
 		def created(id):
-			print("Created "+str(id))
 			self.town.send_command("BAG", {'update': {"id": id, "name": "A cool game!"}})
 			self.setup_preexisting(id)
-			self.town.send_command("MOV", {'rc': id, 'new_map': 61, 'to': [1,1]})
+			self.town.send_command("MOV", {'rc': id, 'new_map': 61, 'to': [1,1]}) # Temporary
 
 		if self.entity_requested:
 			return
@@ -79,6 +80,7 @@ class GameScreen(object):
 	def start_game(self):
 		if not self.game:
 			return
+		self.waiting_for_keys.clear()
 		self.game_in_progress = True
 		self.send_chat(f'Starting [b]{self.game.name}[/b]! Players: {self.player_name_list()}. [bot-message-button=Stop game]stop[/bot-message-button]')
 		self.game.start_game()
@@ -87,8 +89,12 @@ class GameScreen(object):
 	def stop_game(self, inactivity=True):
 		if not self.game:
 			return
+		for player in self.current_players:
+			self.release_keys(player)
 		self.current_players = []
-		self.current_players_by_id = {}
+		self.current_players_by_id.clear()
+		self.waiting_for_keys.clear()
+
 		if self.game_in_progress:
 			self.game_in_progress = False
 			self.game.stop_game()
@@ -117,36 +123,57 @@ class GameScreen(object):
 		else:
 			return ", ".join(_.name for _ in self.current_players)
 
-	def request_keys(self, command):
-		pass
+	def request_keys(self, player):
+		self.town.send_command("EXT", {"take_controls": {"id": player.entity_id, "keys": self.game.keys_to_request, "pass_on": self.game.keys_pass_on, "key_up": self.game.receive_key_up}, "rc": self.entity_id})
+
+	def release_keys(self, player):
+		if player.took_keys:
+			self.town.send_command("EXT", {"take_controls": {"id": player.entity_id, "keys": []}, "rc": self.entity_id})
+			player.took_keys = False
+
+	def join_game(self, player):
+		user_id = player.entity_id
+		self.waiting_for_keys.pop(user_id, None)
+		if self.game_in_progress:
+			self.tell_user(user_id, "Sorry, the game is already in progress!")
+			return False
+		elif user_id in self.current_players_by_id:
+			self.tell_user(user_id, "You already joined! [bot-message-button=Leave]leave[/bot-message-button]")
+			return False
+		elif len(self.current_players) >= self.game.max_players:
+			self.tell_user(user_id, "Sorry, there are already too many players!")
+			return False
+		else:
+			self.current_players.append(player)
+			self.current_players_by_id[user_id] = player
+
+			if self.game.max_players == 1:
+				self.tell_user(user_id, f'You start [b]{self.game.name}[/b]! [bot-message-button=Leave]leave[/bot-message-button]')
+				self.start_game()
+
+			if len(self.current_players) >= self.game.max_players:
+				self.tell_user(user_id, f'You join [b]{self.game.name}[/b], and now the game is full! [bot-message-button=Leave]leave[/bot-message-button]')
+				self.start_game()
+			else:
+				self.tell_user(user_id, f'You join [b]{self.game.name}[/b]! [bot-message-button=Leave]leave[/bot-message-button]')
+
+				self.send_chat(f'{player.name} joins [b]{self.game.name}[/b]! Players: {len(self.current_players)}/{self.game.min_players}{" [bot-message-button=Start game]start[/bot_message-button]" if len(self.current_players) >= self.game.min_players else ""}')
+		return True
 
 	def receive_private_message(self, user_id, username, name, text):
 		if not self.game:
 			return
 		if text == "join":
-			if self.game_in_progress:
-				self.tell_user(user_id, "Sorry, the game is already in progress!")
-			elif user_id in self.current_players_by_id:
-				self.tell_user(user_id, "You already joined! [bot-message-button=Leave]leave[/bot-message-button]")
-			elif len(self.current_players) >= self.game.max_players:
-				self.tell_user(user_id, "Sorry, there are already too many players!")
-			else:
-				player = GamePlayer(user_id, username, name)
-				self.current_players.append(player)
-				self.current_players_by_id[user_id] = player
-
-				if self.game.max_players == 1:
-					self.tell_user(user_id, f'You start [b]{self.game.name}[/b]! [bot-message-button=Leave]leave[/bot-message-button]')
-					self.start_game()
-					return
-
-				if len(self.current_players) >= self.game.max_players:
-					self.tell_user(user_id, f'You join [b]{self.game.name}[/b], and now the game is full! [bot-message-button=Leave]leave[/bot-message-button]')
-					self.start_game()
+			if self.game:
+				if not self.game_in_progress:
+					player = GamePlayer(user_id, username, name)
+					if self.game.keys_to_request:
+						self.waiting_for_keys[user_id] = player
+						self.request_keys(player)
+					else:
+						self.join_game(player)
 				else:
-					self.tell_user(user_id, f'You join [b]{self.game.name}[/b]! [bot-message-button=Leave]leave[/bot-message-button]')
-
-					self.send_chat(f'{name} joins [b]{self.game.name}[/b]! Players: {len(self.current_players)}/{self.game.min_players}{" [bot-message-button=Start game]start[/bot_message-button]" if len(self.current_players) >= self.game.min_players else ""}')
+					self.tell_user(user_id, "Sorry, the game is already in progress!")
 		elif text == "leave":
 			if user_id not in self.current_players_by_id:
 				return
@@ -154,6 +181,8 @@ class GameScreen(object):
 				self.stop_game()
 			else:
 				player =  self.current_players_by_id[user_id]
+				self.release_keys(player)
+				del self.current_players_by_id[user_id]
 				self.current_players.remove(player)
 				self.tell_user(user_id, f'You leave [b]{self.game.name}[/b]')
 		elif text == "instructions":
@@ -176,6 +205,8 @@ class GameScreen(object):
 				self.stop_game()
 			else:
 				self.tell_user(user_id, "No game in progress")
+		elif text == "help":
+			self.tell_user(user_id, "Commands: [bot-message-button]join[/bot-message-button], [bot-message-button]leave[/bot-message-button], [bot-message-button]instructions[/bot-message-button], [bot-message-button]start[/bot-message-button], [bot-message-button]stop[/bot-message-button]")
 
 	def forward_message_to(self, message):
 		if len(message)<3:
@@ -205,7 +236,7 @@ class GameScreen(object):
 							self.game.click(player, pixel_x, pixel_y, map_x, map_y)
 							self.refresh_screen_if_needed()
 					elif player != None:
-						self.tell_user(user_id, "You already joined! [bot-message-button=Leave]leave[/bot-message-button]")
+						self.tell_user(a_id, "You already joined! [bot-message-button=Leave]leave[/bot-message-button]")
 					else:
 						if self.game_in_progress or len(self.current_players) >= self.game.max_players:
 							self.tell_user(a_id, f'{self.game.name} is already in use by {self.player_name_list()}. You can still look at the instructions: [bot-message-button=Instructions]instructions[/bot-message-button]')
@@ -227,7 +258,21 @@ class GameScreen(object):
 					self.refresh_screen_if_needed()
 
 			elif "took_controls" in arg:
-				pass
+				if not self.game:
+					return
+				arg2 = arg["took_controls"]
+				a_id     = arg2.get("id", None)
+				a_keys   = arg2.get("keys", None)
+				a_accept = arg2.get("accept", True)
+				if a_id in self.waiting_for_keys and a_accept:
+					player = self.waiting_for_keys[a_id]
+					player.took_keys = True
+					player.keys_available = set(a_keys)
+					if all(key in player.keys_available for key in self.game.keys_required):
+						self.join_game(player)
+					elif player.keys_available: # Make sure it's not an empty set
+						self.release_keys(player)
+						self.tell_user(a_id, "Your client doesn't support some keys this game needs")
 			elif "bot_message_button" in arg:
 				self.last_input_at = time.time()
 				if self.game:
@@ -235,7 +280,14 @@ class GameScreen(object):
 					self.receive_private_message(arg2.get("id", None), arg2.get("username"), arg2.get("name"), arg2.get("text", None))
 
 		elif message_type == "ERR":
-			pass
+			ext_type = arg.get("ext_type", None)
+			if ext_type == "take_controls":
+				code = arg.get("code", None)
+				detail = arg.get("detail", None)
+				subject_id = arg.get("subject_id", None)
+				if code == "missing_permission" and detail == "minigame" and subject_id in self.waiting_for_keys:
+					self.send_cmd_command(f'requestpermission {subject_id} minigame')
+
 		elif message_type == "PRI":
 			if arg.get("receive", False):
 				self.receive_private_message(arg.get("id", None), arg.get("username"), arg.get("name"), arg.get("text", None))
@@ -246,9 +298,8 @@ class GameScreen(object):
 				request_id = accepted.get("id", None)
 				request_type = accepted.get("type", None)
 				request_data = accepted.get("data", None)
-				if request_type == "tempgrant" and request_data == "minigame":
-					print("Minigame granted")
-					pass
+				if request_type == "tempgrant" and request_data == "minigame" and request_id in self.waiting_for_keys:
+					self.request_keys(self.waiting_for_keys[request_id])
 
 	def tick(self):
 		if not self.game:

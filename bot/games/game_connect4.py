@@ -3,11 +3,13 @@ from games.game_base import *
 class GameConnect4(GameBase):
 	def __init__(self, game_screen):
 		super().__init__(game_screen)
-		self.game_name = "Connect 4"
+		self.name = "Connect 4"
 		self.instructions = "Click on a column to drop a circle in it. You win if you form a line of four circles of your color."
 		self.player_slot_names = ("red", "yellow")
 		self.min_players = 2
 		self.max_players = 2
+		self.keys_to_request = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw"]
+		self.keys_required   = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw"]
 
 	def init_game(self):
 		self.set_screen_size(3, 3, 16, 16, (1,0))

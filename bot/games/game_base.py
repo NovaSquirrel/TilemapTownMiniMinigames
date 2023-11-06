@@ -15,6 +15,8 @@ class GameBase(object):
 		self.max_players = 1
 		self.keys_to_request = []
 		self.keys_required   = []
+		self.keys_pass_on    = False
+		self.receive_key_up  = True
 		self.timeout = 8 * 60
 
 		self.name = "Game"
