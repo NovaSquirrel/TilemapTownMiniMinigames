@@ -81,7 +81,7 @@ class GameBubblePop(GameBase):
 				self.search_on_tick = False
 				if self.out_of_moves():
 					self.game_ongoing = False
-					self.send_chat(f'No more moves! Final score: [b]{self.score}[/b]. Biggest pop: {self.best_size}. Click to start a new game.')
+					self.send_chat(f'You're out of moves! Final score: [b]{self.score}[/b]. Biggest pop: {self.best_size}. Click score to start a new game.')
 
 	def out_of_moves(self):
 		for y in range(SCORE_HEIGHT, SCORE_HEIGHT+BOARD_H):
@@ -91,10 +91,13 @@ class GameBubblePop(GameBase):
 		return True
 
 	def click(self, player, x, y, map_x, map_y):
-		if player == None or map_y < SCORE_HEIGHT:
+		if player == None:
 			return
 		if not self.game_ongoing:
-			self.start_game()
+			if map_y < SCORE_HEIGHT:
+				self.start_game()
+				return
+		if map_y < SCORE_HEIGHT:
 			return
 
 		# Make sure you're clicking on the right tile type
