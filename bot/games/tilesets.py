@@ -62,7 +62,7 @@ class BoardGameTile:
 	# Also there's some bomber tiles
 
 class ColorBombTile: #4x4
-	url = "https://i.imgur.com/J8nvoUy.png"
+	url = "https://i.imgur.com/n3qMpNd.png"
 	tile_w = 4
 	tile_h = 4
 	
@@ -90,6 +90,14 @@ class ColorBombTile: #4x4
 
 	snake_part = (6,6)
 	snake_apple = (7,6)
+
+	def digit_top(num):
+		return (num & 7, 7 + (2 if num > 7 else 0))
+	def digit_bottom(num):
+		return (num & 7, 8 + (2 if num > 7 else 0))
+
+	digit_blank_top = (3,9)
+	digit_blank_bottom = (3,10)
 
 class BingoTile: #8x8
 	url = "https://i.imgur.com/rkA5Y01.png"

@@ -86,7 +86,7 @@ class GameScreen(object):
 		self.game.start_game()
 		self.last_input_at = time.time() # Start counting from now
 
-	def stop_game(self, inactivity=True):
+	def stop_game(self, inactivity=False):
 		if not self.game:
 			return
 		for player in self.current_players:
