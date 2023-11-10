@@ -1,6 +1,6 @@
 import json, time
 from game_shared import *
-from games.game_directory import game_directory
+from games.directory import game_directory
 
 entity_request_count = 1
 
@@ -47,7 +47,7 @@ class GameScreen(object):
 		global entity_request_count
 
 		def created(id):
-			self.town.send_command("BAG", {'update': {"id": id, "name": "A cool game!"}})
+			self.town.send_command("BAG", {'update': {"id": id, "name": "A cool game!", "pic": [-1, 3, 5]}}) # Use invisible wall tile
 			self.setup_preexisting(id)
 			self.town.send_command("MOV", {'rc': id, 'new_map': 61, 'to': [1,1]}) # Temporary
 
@@ -163,17 +163,30 @@ class GameScreen(object):
 	def receive_private_message(self, user_id, username, name, text):
 		if not self.game:
 			return
+
 		if text == "join":
-			if self.game:
-				if not self.game_in_progress:
-					player = GamePlayer(user_id, username, name)
-					if self.game.keys_to_request:
-						self.waiting_for_keys[user_id] = player
-						self.request_keys(player)
-					else:
-						self.join_game(player)
+			if not self.game_in_progress:
+				player = GamePlayer(user_id, username, name)
+				if self.game.keys_to_request:
+					self.waiting_for_keys[user_id] = player
+					self.request_keys(player)
 				else:
-					self.tell_user(user_id, "Sorry, the game is already in progress!")
+					self.join_game(player)
+			else:
+				self.tell_user(user_id, "Sorry, the game is already in progress!")
+		elif text == "joinclick" and not self.game.key_mode_only:
+			if not self.game_in_progress:
+				self.join_game(GamePlayer(user_id, username, name))
+			else:
+				self.tell_user(user_id, "Sorry, the game is already in progress!")
+		elif text == "joinkeys" and len(self.game.keys_to_request):
+			if not self.game_in_progress:
+				player = GamePlayer(user_id, username, name)
+				self.waiting_for_keys[user_id] = player
+				self.request_keys(player)
+			else:
+				self.tell_user(user_id, "Sorry, the game is already in progress!")
+
 		elif text == "leave":
 			if user_id not in self.current_players_by_id:
 				return
@@ -206,7 +219,7 @@ class GameScreen(object):
 			else:
 				self.tell_user(user_id, "No game in progress")
 		elif text == "help":
-			self.tell_user(user_id, "Commands: [bot-message-button]join[/bot-message-button], [bot-message-button]leave[/bot-message-button], [bot-message-button]instructions[/bot-message-button], [bot-message-button]start[/bot-message-button], [bot-message-button]stop[/bot-message-button]")
+			self.tell_user(user_id, "Commands: [bot-message-button]join[/bot-message-button], [bot-message-button]joinclick[/bot-message-button], [bot-message-button]joinkeys[/bot-message-button], [bot-message-button]leave[/bot-message-button], [bot-message-button]instructions[/bot-message-button], [bot-message-button]start[/bot-message-button], [bot-message-button]stop[/bot-message-button]")
 
 	def forward_message_to(self, message):
 		if len(message)<3:
@@ -241,7 +254,8 @@ class GameScreen(object):
 						if self.game_in_progress or len(self.current_players) >= self.game.max_players:
 							self.tell_user(a_id, f'{self.game.name} is already in use by {self.player_name_list()}. You can still look at the instructions: [bot-message-button=Instructions]instructions[/bot-message-button]')
 						else:
-							self.tell_user(a_id, f'{"Join" if self.game.max_players > 1 else "Start"} [b]{self.game.name}[/b]? [bot-message-button=Instructions]instructions[/bot-message-button] [bot-message-button=Join game]join[/bot-message-button]')
+							self.tell_user(a_id, f'{"Join" if self.game.max_players > 1 else "Start"} [b]{self.game.name}[/b]? [bot-message-button=Instructions]instructions[/bot-message-button] {"[bot-message-button=🖱️Join]joinclick[/bot-message-button] [bot-message-button=🎮Join]joinkeys[/bot-message-button]" if (not self.game.key_mode_only and len(self.game.keys_to_request)) else "[bot-message-button=Join game]join[/bot-message-button]"}')
+
 			elif "key_press" in arg:
 				if self.game and self.game_in_progress:
 					self.last_input_at = time.time()
@@ -252,9 +266,9 @@ class GameScreen(object):
 					player = self.player_num_from_id(a_id)
 
 					if a_down:
-						self.game.key_press(self, player, key)
+						self.game.key_press(player, a_key)
 					else:
-						self.game.key_release(self, player, key)
+						self.game.key_release(player, a_key)
 					self.refresh_screen_if_needed()
 
 			elif "took_controls" in arg:
@@ -320,7 +334,7 @@ class GameScreen(object):
 
 		if self.game.game_map_config_changed:
 			self.game.game_map_config_changed = False
-			out['mini_tilemap'] = {"visible": self.game.visible, "clickable": self.game.clickable, "map_size": [self.game.map_w, self.game.map_h], "tile_size": [self.game.tile_w, self.game.tile_h], "tileset_url": self.game.tileset_url, "offset": self.game.offset}
+			out['mini_tilemap'] = {"visible": self.game.visible, "clickable": self.game.clickable, "map_size": [self.game.map_w, self.game.map_h], "tile_size": [self.game.tile_w, self.game.tile_h], "tileset_url": self.game.tileset_url, "offset": self.game.offset, "transparent_tile": self.game.transparent_tile}
 
 		if self.game.game_map_changed:
 			self.game.game_map_changed = False

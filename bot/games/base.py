@@ -9,12 +9,14 @@ class GameBase(object):
 		self.visible = True
 		self.clickable = True
 		self.offset = [0,0]
+		self.transparent_tile = 0
 
 		# Defaults
 		self.min_players = 1
 		self.max_players = 1
 		self.keys_to_request = []
-		self.keys_required   = []
+		self.keys_required   = []    # Keys that are required for keys mode
+		self.key_mode_only   = False # Taking the keys is required
 		self.keys_pass_on    = False
 		self.receive_key_up  = True
 		self.timeout = 8 * 60
@@ -72,6 +74,9 @@ class GameBase(object):
 
 	def tell_user(self, user, text):
 		self.game_screen.tell_user(user, text)
+
+	def tell_player(self, player, text):
+		self.game_screen.tell_user(self.game_screen.current_players[player].entity_id, text)
 
 	def send_cmd_command(self, command):
 		self.game_screen.send_cmd_command(command)
