@@ -68,7 +68,7 @@ class GameConnect4(GameBase):
 		if self.use_cursor:
 			self.set_screen_tile(self.key_cursor_x, 0, BoardGameTile.connect4_yellow_cursor if self.current_player else BoardGameTile.connect4_red_cursor, True)
 
-	def place_in_column(self, place_x):
+	def place_in_column(self, player, place_x):
 		try_y = self.BOARD_H-1
 		while try_y >= 0:
 			if self.get_screen_tile(place_x, try_y) == BoardGameTile.connect4_tile:
@@ -120,7 +120,7 @@ class GameConnect4(GameBase):
 			):
 				for pos in positions:
 					self.set_screen_tile(pos[0], pos[1], tile)
-			self.send_chat(f'Won by {self.game_screen.current_players[self.current_player].name} (Playing as {self.player_slot_names[self.current_player]})! Click to start a new game.')
+			self.send_chat(f'Won by {self.game_screen.current_players[self.current_player].name} (playing as {self.player_slot_names[self.current_player]})! Click to start a new game.')
 			self.game_ongoing = False
 			return
 
@@ -144,7 +144,7 @@ class GameConnect4(GameBase):
 		if player != self.current_player:
 			self.tell_player(player, f"It's currently {self.player_slot_names[self.current_player]}\'s turn")
 		else:
-			self.place_in_column(map_x)
+			self.place_in_column(player, map_x)
 
 	def key_press(self, player, key):
 		if player == None:
@@ -157,7 +157,7 @@ class GameConnect4(GameBase):
 			return
 
 		if key == "use-item":
-			self.place_in_column(self.key_cursor_x)
+			self.place_in_column(player, self.key_cursor_x)
 		elif key == "move-e":
 			self.cursor_next()
 		elif key == "move-w":
