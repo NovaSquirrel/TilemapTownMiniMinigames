@@ -3,18 +3,20 @@ from games.tilesets import *
 import random
 
 class GameConnect4(GameBase):
-	def __init__(self, game_screen):
-		super().__init__(game_screen)
-		self.name = "Connect 4"
-		self.instructions = "Click on a column to drop a circle in it. You win if you form a line of four circles of your color."
-		self.player_slot_names = ("red", "yellow")
-		self.min_players = 2
-		self.max_players = 2
-		self.keys_to_request = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw", "use-item"]
-		self.keys_required   = ["move-e", "move-w", "use-item"]
+	BOARD_W = 7
+	BOARD_H = 6
+	STATUS_HEIGHT = 1
+
+	name = "Connect 4"
+	instructions = "Click on a column to drop a circle in it. You win if you form a line of four circles of your color."
+	player_slot_names = ("red", "yellow")
+	min_players = 2
+	max_players = 2
+	keys_to_request = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw", "use-item"]
+	keys_required   = ["move-e", "move-w", "use-item"]
 
 	def init_game(self):
-		self.set_screen_size(7, 7, BoardGameTile.tile_w, BoardGameTile.tile_h)
+		self.set_screen_size(self.BOARD_W, self.BOARD_H+self.STATUS_HEIGHT, BoardGameTile.tile_w, BoardGameTile.tile_h)
 		self.set_screen_params(tileset_url=BoardGameTile.url, clickable=True)
 		self.draw_initial_board()
 
@@ -25,14 +27,15 @@ class GameConnect4(GameBase):
 		self.game_ongoing = True
 
 	def draw_initial_board(self):
-		self.set_screen_tile_rect(0, 0, 7, 6, BoardGameTile.connect4_tile)
-		self.set_screen_tile(0, 6, BoardGameTile.connect4_leg_l)
-		self.set_screen_tile(6, 6, BoardGameTile.connect4_leg_r)
+		self.set_screen_tile_rect(0, 0, self.BOARD_W, self.BOARD_H, BoardGameTile.connect4_tile)
+		self.set_screen_tile(0,              self.BOARD_H, BoardGameTile.connect4_leg_l)
+		self.set_screen_tile(self.BOARD_W-1, self.BOARD_H, BoardGameTile.connect4_leg_r)
 
 	def start_turn(self, player):
 		self.current_player = player
-		self.set_screen_tile(2, 6, BoardGameTile.current_player)
-		self.set_screen_tile(3, 6, BoardGameTile.player_yellow if self.current_player else BoardGameTile.player_red)
+		self.set_screen_tile(self.BOARD_W//2-1, self.BOARD_H, BoardGameTile.current_player)
+		self.set_screen_tile(self.BOARD_W//2,   self.BOARD_H, BoardGameTile.player_yellow if self.current_player else BoardGameTile.player_red)
+
 
 		# Try and position it in the middle
 		self.use_cursor = self.game_screen.current_players[player].took_keys
@@ -47,7 +50,7 @@ class GameConnect4(GameBase):
 		while True:
 			self.key_cursor_x -= 1
 			if self.key_cursor_x == -1:
-				self.key_cursor_x = 6
+				self.key_cursor_x = self.BOARD_W-1
 			if self.key_cursor_x == original_value or self.get_screen_tile(self.key_cursor_x, 0) == BoardGameTile.connect4_tile:
 				return
 
@@ -55,18 +58,18 @@ class GameConnect4(GameBase):
 		original_value = self.key_cursor_x
 		while True:
 			self.key_cursor_x += 1
-			if self.key_cursor_x == 7:
+			if self.key_cursor_x == self.BOARD_W:
 				self.key_cursor_x = 0
 			if self.key_cursor_x == original_value or self.get_screen_tile(self.key_cursor_x, 0) == BoardGameTile.connect4_tile:
 				return
 
 	def draw_cursor(self):
-		self.set_screen_tile_rect(0, 0, 7, 1, None, True)
+		self.set_screen_tile_rect(0, 0, self.BOARD_W, 1, None, True)
 		if self.use_cursor:
 			self.set_screen_tile(self.key_cursor_x, 0, BoardGameTile.connect4_yellow_cursor if self.current_player else BoardGameTile.connect4_red_cursor, True)
 
 	def place_in_column(self, place_x):
-		try_y = 6
+		try_y = self.BOARD_H-1
 		while try_y >= 0:
 			if self.get_screen_tile(place_x, try_y) == BoardGameTile.connect4_tile:
 				break
@@ -160,3 +163,7 @@ class GameConnect4(GameBase):
 		elif key == "move-w":
 			self.cursor_prev()
 		self.draw_cursor()
+
+class GameConnect4Big(GameConnect4):
+	BOARD_W = 12
+	BOARD_H = 11

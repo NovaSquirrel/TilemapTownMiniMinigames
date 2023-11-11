@@ -1,29 +1,29 @@
 from game_shared import *
 
 class GameBase(object):
+	tileset_url = None
+	visible = True
+	clickable = True
+	offset = [0,0]
+	transparent_tile = 0
+
+	# Defaults
+	min_players = 1
+	max_players = 1
+	keys_to_request = []
+	keys_required   = []    # Keys that are required for keys mode
+	key_mode_only   = False # Taking the keys is required
+	keys_pass_on    = False
+	receive_key_up  = False
+	timeout = 8 * 60
+
+	name = "Game"
+	instructions = ""
+	player_slot_names = None # List/tuple of a name for each player slot, in order
+
 	def __init__(self, game_screen):
 		self.game_screen = game_screen
 		self.set_screen_size(1, 1, 1, 1)
-
-		self.tileset_url = None
-		self.visible = True
-		self.clickable = True
-		self.offset = [0,0]
-		self.transparent_tile = 0
-
-		# Defaults
-		self.min_players = 1
-		self.max_players = 1
-		self.keys_to_request = []
-		self.keys_required   = []    # Keys that are required for keys mode
-		self.key_mode_only   = False # Taking the keys is required
-		self.keys_pass_on    = False
-		self.receive_key_up  = False
-		self.timeout = 8 * 60
-
-		self.name = "Game"
-		self.instructions = ""
-		self.player_slot_names = None # List/tuple of a name for each player slot, in order
 
 	def set_screen_size(self, map_w, map_h, tile_w, tile_h, value = (0,0), over_value = None):
 		self.map_w = map_w

@@ -58,7 +58,7 @@ class TilemapTown(object):
 				continue
 
 	def receive_server_message(self, message):
-		print("<< "+message)
+		#print("<< "+message)
 		message_type = message[0:3]
 		arg = {}
 		if len(message) > 4:
@@ -67,7 +67,7 @@ class TilemapTown(object):
 			protocol_handlers[message_type](self, arg)
 
 	def send_command(self, command, params):
-		print(">> "+command+ " " + (json.dumps(params) if params != None else ""))
+		#print(">> "+command+ " " + (json.dumps(params) if params != None else ""))
 		if self.websocket == None:
 			return
 		def make_protocol_message_string(command, params):

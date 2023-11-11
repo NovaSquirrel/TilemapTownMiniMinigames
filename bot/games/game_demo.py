@@ -2,15 +2,13 @@ from games.base import *
 from games.tilesets import *
 
 class GameDemo(GameBase):
-	def __init__(self, game_screen):
-		super().__init__(game_screen)
-		self.name = "Demo"
-		self.instructions = "Test instructions"
-		self.player_slot_names = ("red", "yellow")
-		self.min_players = 2
-		self.max_players = 2
-		self.keys_to_request = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw"]
-		self.keys_required   = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw"]
+	name = "Demo"
+	instructions = "Test instructions"
+	player_slot_names = ("red", "yellow")
+	min_players = 2
+	max_players = 2
+	keys_to_request = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw"]
+	keys_required   = ["move-n", "move-ne", "move-e", "move-se", "move-s", "move-sw", "move-w", "move-nw"]
 
 	def init_game(self):
 		self.set_screen_size(3, 3, 16, 16, (1,0))

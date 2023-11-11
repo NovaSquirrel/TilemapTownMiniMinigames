@@ -40,7 +40,7 @@ class GameScreen(object):
 		self.town.game_screens_by_entity_id[e_id] = self
 		self.town.send_cmd_command(f'message_forwarding set {self.entity_id} MSG,EXT,ERR,PRI')
 
-		self.change_game(game_directory['connect_4']) # Temporary
+		self.change_game(game_directory['reversi']) # Temporary
 
 	def setup_by_create(self):
 		# Create a new entity and then use it
@@ -49,7 +49,7 @@ class GameScreen(object):
 		def created(id):
 			self.town.send_command("BAG", {'update': {"id": id, "name": "A cool game!", "pic": [-1, 3, 5]}}) # Use invisible wall tile
 			self.setup_preexisting(id)
-			self.town.send_command("MOV", {'rc': id, 'new_map': 61, 'to': [1,1]}) # Temporary
+			self.town.send_command("MOV", {'rc': id, 'new_map': 61, 'to': [3,3]}) # Temporary
 
 		if self.entity_requested:
 			return
@@ -152,7 +152,7 @@ class GameScreen(object):
 				self.start_game()
 
 			if len(self.current_players) >= self.game.max_players:
-				self.tell_user(user_id, f'You join [b]{self.game.name}[/b], and now the game is full! [bot-message-button=Leave]leave[/bot-message-button]')
+				self.tell_user(user_id, f'You join [b]{self.game.name}[/b]{", and now the game is full" if self.game.max_players > 1 else ""}! [bot-message-button=Leave]leave[/bot-message-button]')
 				self.start_game()
 			else:
 				self.tell_user(user_id, f'You join [b]{self.game.name}[/b]! [bot-message-button=Leave]leave[/bot-message-button]')
@@ -161,6 +161,15 @@ class GameScreen(object):
 		return True
 
 	def receive_private_message(self, user_id, username, name, text):
+		if text == "gamelist":
+			self.tell_user(user_id, "Games: " + ", ".join(f"[bot-message-button={x}]game {x}[/bot-message-button]" for x in game_directory.keys()))
+		elif text.startswith("game "):
+			gamename = text[5:].strip()
+			if gamename in game_directory:
+				self.change_game(game_directory[gamename])
+		elif text == "help":
+			self.tell_user(user_id, "Commands: [bot-message-button]join[/bot-message-button], [bot-message-button]joinclick[/bot-message-button], [bot-message-button]joinkeys[/bot-message-button], [bot-message-button]leave[/bot-message-button], [bot-message-button]instructions[/bot-message-button], [bot-message-button]start[/bot-message-button], [bot-message-button]stop[/bot-message-button], [bot-message-button]gamelist[/bot-message-button], [bot-message-button]game[/bot-message-button]")
+
 		if not self.game:
 			return
 
@@ -218,8 +227,6 @@ class GameScreen(object):
 				self.stop_game()
 			else:
 				self.tell_user(user_id, "No game in progress")
-		elif text == "help":
-			self.tell_user(user_id, "Commands: [bot-message-button]join[/bot-message-button], [bot-message-button]joinclick[/bot-message-button], [bot-message-button]joinkeys[/bot-message-button], [bot-message-button]leave[/bot-message-button], [bot-message-button]instructions[/bot-message-button], [bot-message-button]start[/bot-message-button], [bot-message-button]stop[/bot-message-button]")
 
 	def forward_message_to(self, message):
 		if len(message)<3:
@@ -314,6 +321,10 @@ class GameScreen(object):
 				request_data = accepted.get("data", None)
 				if request_type == "tempgrant" and request_data == "minigame" and request_id in self.waiting_for_keys:
 					self.request_keys(self.waiting_for_keys[request_id])
+			if "buttons" in arg:
+				for command in arg["buttons"][1::2]:
+					if command.startswith('tpaccept '):
+						self.send_cmd_command(command)
 
 	def tick(self):
 		if not self.game:
