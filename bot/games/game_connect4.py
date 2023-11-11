@@ -114,7 +114,7 @@ class GameConnect4(GameBase):
 		if match_h or match_v or match_d1 or match_d2:
 			for positions, tile in (
 				(match_h, BoardGameTile.connect4_yellow_h if self.current_player else BoardGameTile.connect4_red_h),
-				(match_v, BoardGameTile.connect4_yellow_v if self.current_player else BoardGameTile.connect4_red_h),
+				(match_v, BoardGameTile.connect4_yellow_v if self.current_player else BoardGameTile.connect4_red_v),
 				(match_d1, BoardGameTile.connect4_yellow_d1 if self.current_player else BoardGameTile.connect4_red_d1),
 				(match_d2, BoardGameTile.connect4_yellow_d2 if self.current_player else BoardGameTile.connect4_red_d2)
 			):
