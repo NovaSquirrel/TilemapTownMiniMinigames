@@ -103,6 +103,8 @@ class GameScreen(object):
 			self.send_chat(f'Canceling [b]{self.game.name}[/b]')
 
 	def change_game(self, game):
+		if self.game_in_progress:
+			self.stop_game()
 		self.game = game(self)
 		self.game.init_game()
 		self.refresh_screen_if_needed()
@@ -167,6 +169,9 @@ class GameScreen(object):
 			gamename = text[5:].strip()
 			if gamename in game_directory:
 				self.change_game(game_directory[gamename])
+				print("New game "+gamename)
+			else:
+				print("Can't find "+gamename)
 		elif text == "help":
 			self.tell_user(user_id, "Commands: [bot-message-button]join[/bot-message-button], [bot-message-button]joinclick[/bot-message-button], [bot-message-button]joinkeys[/bot-message-button], [bot-message-button]leave[/bot-message-button], [bot-message-button]instructions[/bot-message-button], [bot-message-button]start[/bot-message-button], [bot-message-button]stop[/bot-message-button], [bot-message-button]gamelist[/bot-message-button], [bot-message-button]game[/bot-message-button]")
 

@@ -34,6 +34,9 @@ class GameBubblePop(GameBase):
 		self.search_on_tick = False
 		self.update_score()
 
+	def stop_game(self):
+		self.game_ongoing = False
+
 	def update_score(self):
 		score_length = 6 - (self.BOARD_W % 1)
 		text = ("%%.%dd" % score_length) % self.score
@@ -68,24 +71,23 @@ class GameBubblePop(GameBase):
 			self.tick_delay -= 1
 			return
 		if self.search_on_tick:
-			changed_anything = False
+			keep_going = False
 			for y in range(self.SCORE_HEIGHT+self.BOARD_H-1, self.SCORE_HEIGHT-1, -1):
 				for x in range(self.BOARD_W):
 					color = self.get_screen_tile(x, y)
 					if color[1] == 3:
 						self.set_screen_tile(x, y, ColorBombTile.black)
-						changed_anything = True
+						if self.RANDOM_ABOVE:
+							keep_going = True
+						#self.set_screen_tile(x, y, ColorBombTile.black if (y != self.SCORE_HEIGHT or not self.RANDOM_ABOVE) else (random.randint(0, self.COLORS-1), self.TILE_ROW))
 					elif color == ColorBombTile.black:
-						changed_column = False
 						for drop_y in range(y, 2, -1):
 							above = self.get_screen_tile(x, drop_y-1)
-							changed_column = changed_column or (above != ColorBombTile.black)
 							self.set_screen_tile(x, drop_y, above)
 						# Random color at the top
-						if changed_column:
-							self.set_screen_tile(x, 2, (random.randint(0, self.COLORS-1), self.TILE_ROW) if self.RANDOM_ABOVE else ColorBombTile.black)
-						changed_anything = changed_anything or changed_column
+						self.set_screen_tile(x, 2, (random.randint(0, self.COLORS-1), self.TILE_ROW) if self.RANDOM_ABOVE else ColorBombTile.black)
 
+			# Move empty columns over, for SameGame
 			if self.SHIFT_EMPTY_COLUMNS:
 				for x in range(self.BOARD_W):
 					if all(self.get_screen_tile(x, y) == ColorBombTile.black for y in range(self.SCORE_HEIGHT, self.SCORE_HEIGHT+self.BOARD_H)):
@@ -95,7 +97,26 @@ class GameBubblePop(GameBase):
 						for y in range(self.SCORE_HEIGHT, self.SCORE_HEIGHT+self.BOARD_H):
 							self.set_screen_tile(self.BOARD_W-1, y, (random.randint(0, self.COLORS-1), self.TILE_ROW) if self.RANDOM_SIDE else ColorBombTile.black)
 
-			if not changed_anything:
+			# Need to keep going?
+			if not keep_going:
+				for x in range(self.BOARD_W):
+					bottom_black = None
+					top_non_black = None
+					for y in range(self.SCORE_HEIGHT, self.SCORE_HEIGHT+self.BOARD_H):
+						color = self.get_screen_tile(x, y)
+						if color[1] == 3:
+							keep_going = True
+							break
+						if color == ColorBombTile.black:
+							bottom_black = y
+						elif top_non_black == None:
+							top_non_black = y
+					if bottom_black and top_non_black and bottom_black > top_non_black:
+						keep_going = True
+					if keep_going:
+						break
+
+			if not keep_going:
 				self.search_on_tick = False
 				if self.out_of_moves():
 					self.game_ongoing = False
@@ -141,14 +162,17 @@ class GameBubblePop(GameBase):
 class GameBubblePopSquare(GameBubblePop):
 	BOARD_W = 10
 	BOARD_H = 10
+	name = "Bubble Pop (square)"
 
 class GameBubblePopMax(GameBubblePop):
 	BOARD_W = 16
 	BOARD_H = 14
+	name = "Bubble Pop (BIG)"
 
 class GameBubblePopMultiplayer(GameBubblePop):
 	BOARD_W = 16
 	BOARD_H = 14
+	name = "Bubble Pop (multiplayer)"
 
 	def __init__(self, game_screen):
 		super().__init__(game_screen)
@@ -160,6 +184,7 @@ class GameBubblePopSameGame(GameBubblePop):
 	COLORS = 5
 	RANDOM_ABOVE = False
 	SHIFT_EMPTY_COLUMNS = True
+	name = "SameGame"
 
 class GameBubblePopSameGameExtended(GameBubblePop):
 	BOARD_W = 12
@@ -168,3 +193,4 @@ class GameBubblePopSameGameExtended(GameBubblePop):
 	RANDOM_ABOVE = False
 	SHIFT_EMPTY_COLUMNS = True
 	RANDOM_SIDE = True
+	name = "SameGame (extended)"

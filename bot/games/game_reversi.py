@@ -33,6 +33,9 @@ class GameReversi(GameBase):
 		self.start_turn(random.randint(0, 1))
 		self.game_ongoing = True
 
+	def stop_game(self):
+		self.game_ongoing = False
+
 	def start_turn(self, player):
 		self.current_player = player
 		self.set_screen_tile(self.BOARD_W//2-1, 0, BoardGameTile.current_player)

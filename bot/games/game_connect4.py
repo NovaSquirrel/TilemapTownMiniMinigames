@@ -26,6 +26,9 @@ class GameConnect4(GameBase):
 		self.placed_tile_count = 0
 		self.game_ongoing = True
 
+	def stop_game(self):
+		self.game_ongoing = False
+
 	def draw_initial_board(self):
 		self.set_screen_tile_rect(0, 0, self.BOARD_W, self.BOARD_H, BoardGameTile.connect4_tile)
 		self.set_screen_tile(0,              self.BOARD_H, BoardGameTile.connect4_leg_l)
@@ -86,8 +89,8 @@ class GameConnect4(GameBase):
 		match_v = set()
 		match_d1 = set()
 		match_d2 = set()
-		for y in range(6):
-			for x in range(7):
+		for y in range(self.BOARD_H):
+			for x in range(self.BOARD_W):
 				this = self.get_screen_tile(x, y)
 				if this == BoardGameTile.connect4_tile:
 					continue
@@ -167,3 +170,4 @@ class GameConnect4(GameBase):
 class GameConnect4Big(GameConnect4):
 	BOARD_W = 12
 	BOARD_H = 11
+	name = "Connect 4 BIG version"

@@ -100,7 +100,7 @@ class ColorBombTile: #4x4
 	digit_blank_bottom = (3,10)
 
 class BingoTile: #8x8
-	url = "https://i.imgur.com/rkA5Y01.png"
+	url = "https://i.imgur.com/TxLNIp4.png"
 	tile_w = 8
 	tile_h = 8
 
@@ -121,6 +121,20 @@ class BingoTile: #8x8
 	bingo_g_tile   = (3,9)
 	bingo_o_tile   = (4,9)
 	bingo_tile     = (5,9)
+
+	bingo_b_tile_1 = (0,10)
+	bingo_i_tile_1 = (1,10)
+	bingo_n_tile_1 = (2,10)
+	bingo_g_tile_1 = (3,10)
+	bingo_o_tile_1 = (4,10)
+	bingo_tile_1   = (5,10)
+
+	bingo_b_tile_2 = (0,11)
+	bingo_i_tile_2 = (1,11)
+	bingo_n_tile_2 = (2,11)
+	bingo_g_tile_2 = (3,11)
+	bingo_o_tile_2 = (4,11)
+	bingo_tile_2   = (5,11)
 
 class MiniTownTile: #8x8
 	url = "https://i.imgur.com/qWKkK9A.png"
@@ -230,4 +244,11 @@ class MiniTownTile: #8x8
 	button_x = (13,0)
 	button_prev = (14,0)
 	button_next = (15,0)
+
+class BitmapScreen:
+	tile_w = 4
+	tile_h = 2
+
+	def __init__(self, width, height):
+		self.bitmap_screen = []
 
