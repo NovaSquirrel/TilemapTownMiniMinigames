@@ -40,7 +40,7 @@ class GameScreen(object):
 		self.town.game_screens_by_entity_id[e_id] = self
 		self.town.send_cmd_command(f'message_forwarding set {self.entity_id} MSG,EXT,ERR,PRI')
 
-		self.change_game(game_directory['reversi']) # Temporary
+		self.change_game(game_directory['bingo']) # Temporary
 
 	def setup_by_create(self):
 		# Create a new entity and then use it
@@ -266,7 +266,7 @@ class GameScreen(object):
 						if self.game_in_progress or len(self.current_players) >= self.game.max_players:
 							self.tell_user(a_id, f'{self.game.name} is already in use by {self.player_name_list()}. You can still look at the instructions: [bot-message-button=Instructions]instructions[/bot-message-button]')
 						else:
-							self.tell_user(a_id, f'{"Join" if self.game.max_players > 1 else "Start"} [b]{self.game.name}[/b]? [bot-message-button=Instructions]instructions[/bot-message-button] {"[bot-message-button=🖱️Join]joinclick[/bot-message-button] [bot-message-button=🎮Join]joinkeys[/bot-message-button]" if (not self.game.key_mode_only and len(self.game.keys_to_request)) else "[bot-message-button=Join game]join[/bot-message-button]"}')
+							self.tell_user(a_id, f'{"Join" if self.game.max_players > 1 else "Start"} [b]{self.game.name}[/b]? [bot-message-button=Instructions]instructions[/bot-message-button] {"[bot-message-button=🖱️Join]joinclick[/bot-message-button] [bot-message-button=🎮Join]joinkeys[/bot-message-button]" if (not self.game.key_mode_only and len(self.game.keys_to_request)) else ("[bot-message-button="+("🎮" if self.game.key_mode_only else "")+"Join game]join[/bot-message-button]")}')
 
 			elif "key_press" in arg:
 				if self.game and self.game_in_progress:

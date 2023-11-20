@@ -28,7 +28,7 @@ class TilemapTown(object):
 			try:
 				self.send_command("IDN", {
 					"bot": True,
-					"name": "Bot test",
+					"name": "Minigame bot",
 					"features": {
 						"batch": {"version": "0.0.1"},
 						"entity_message_forwarding": {"version": "0.0.1"},

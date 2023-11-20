@@ -62,7 +62,7 @@ class BoardGameTile:
 	# Also there's some bomber tiles
 
 class ColorBombTile: #4x4
-	url = "https://i.imgur.com/n3qMpNd.png"
+	url = "https://i.imgur.com/AfChnI7.png"
 	tile_w = 4
 	tile_h = 4
 	

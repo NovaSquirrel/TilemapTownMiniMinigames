@@ -5,7 +5,7 @@ import random
 class GameBingo(GameBase):
 	BOARD_W = 5
 	BOARD_H = 5
-	WALLS = 2
+	WALLS = 0
 	WIN_BY_COUNT = False
 
 	name = "Bingo"
@@ -150,12 +150,21 @@ class GameBingo(GameBase):
 			# Otherwise point out the next target
 			self.next_number_to_get += 1
 			if self.next_number_to_get >= self.stop_at_number:
-				if self.WIN_BY_COUNT:
-					self.send_chat("Draw! Click to start a new game.")
-				else:
-					p1_count = 0
-					p2_count = 0
+				p1_count = 0
+				p2_count = 0
+				for y in range(self.BOARD_H):
+					for x in range(self.BOARD_W):
+						t = self.get_screen_tile(x, y)
+						if t == BingoTile.player1_tile:
+							p1_count += 1
+						if t == BingoTile.player2_tile:
+							p2_count += 1
 
+				winner = 0 if p1_count > p2_count else 1
+				if p1_count != p2_count:
+					self.send_chat(f'Won by {self.game_screen.current_players[winner].name} (playing as {self.player_slot_names[winner]})! Click to start a new game.')
+				else:
+					self.send_chat(f'Draw! Click to start a new game.')
 				self.game_ongoing = False
 				return False
 			self.highlight_next_to_get()
