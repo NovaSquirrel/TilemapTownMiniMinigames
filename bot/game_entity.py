@@ -153,7 +153,7 @@ class GameScreen(object):
 				self.tell_user(user_id, f'You start [b]{self.game.name}[/b]! [bot-message-button=Leave]leave[/bot-message-button]')
 				self.start_game()
 
-			if len(self.current_players) >= self.game.max_players:
+			elif len(self.current_players) >= self.game.max_players:
 				self.tell_user(user_id, f'You join [b]{self.game.name}[/b]{", and now the game is full" if self.game.max_players > 1 else ""}! [bot-message-button=Leave]leave[/bot-message-button]')
 				self.start_game()
 			else:
